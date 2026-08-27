@@ -57,4 +57,3 @@ Spring Tool Suite and Eclipse for Java · Cursor and VS Code for everything else
        server — if it goes quiet, the fix is to self-host the same project.
      - The metrics achievements plugin was meant to replace the trophy locally, but
        kept rendering "unexpected error" even with read:org and read:user added. -->
-
