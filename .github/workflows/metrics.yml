@@ -1,21 +1,17 @@
-# Renders profile stats to an SVG committed into this repo.
+# Renders profile stats and streak stats to SVGs committed into this repo.
 #
-# Why this exists: every card served from github-readme-stats.vercel.app has
-# failed on this profile — the stats card, top-languages and the trophy. That
-# host sits permanently over GitHub's API quota, so no parameter tweak revives
-# them. This runs on a schedule instead, commits the result, and the README
-# points at a local file — so nothing is fetched from a third party when someone
-# views the profile. It cannot rate-limit.
+# Why this exists: cards served from shared third-party hosts frequently fail
+# or hit GitHub API quotas. This runs on a schedule instead, commits the results,
+# and the README points at local files — so nothing is fetched from a third party
+# when someone views the profile. It cannot rate-limit.
 #
 # SETUP (one step, only you can do it):
 #   1. Create a classic PAT with the `repo` scope.
-#      Giving it `repo` lets the language breakdown include PRIVATE repos —
-#      which matters here, since ~56 of 62 repos are private and the old
-#      top-langs card only ever saw the public handful.
-#   2. Add it at Settings → Secrets and variables → Actions → New repository
+#      Giving it `repo` lets the language breakdown and streak stats include
+#      PRIVATE repos.
+#   2. Add it at Settings → Secrets and variables → Actions → Environments → prod
 #      secret, named METRICS_TOKEN.
-#   3. Run it once from the Actions tab (workflow_dispatch), then uncomment the
-#      ![Metrics](./github-metrics.svg) line in README.md.
+#   3. Run it from the Actions tab (workflow_dispatch) to generate SVGs.
 #
 # Note: this only runs once merged to the default branch.
 
@@ -38,17 +34,27 @@ jobs:
     # Without this line the job cannot read it and the token arrives empty.
     environment: prod
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.METRICS_TOKEN }}
+
+      - name: Render streak stats
+        uses: DenverCoder1/github-readme-streak-stats@main
+        with:
+          token: ${{ secrets.METRICS_TOKEN }}
+          path: assets/streak-stats.svg
+          options: "user=Mrvishal2k2&theme=github-dark&date_format=M j[, Y]"
+
       - name: Render profile metrics
         # Pinned rather than @latest: the runs resolve to v3.34 anyway, and pinning
         # keeps output reproducible instead of shifting under you.
         uses: lowlighter/metrics@v3.34
         with:
           token: ${{ secrets.METRICS_TOKEN }}
-          # Commit the SVG as you, not as github-actions[bot]. Without this the bot
-          # is credited for each run and reappears in the repo's contributors list.
-          committer_token: ${{ secrets.METRICS_TOKEN }}
           user: Mrvishal2k2
-          filename: github-metrics.svg
+          filename: assets/github-metrics.svg
+          output_action: none
           template: classic
           base: header, activity, repositories
           config_timezone: Asia/Kolkata   # adjust if wrong
@@ -77,3 +83,10 @@ jobs:
           # after read:org and read:user were added to the PAT, so the cause is not
           # scopes. The trophy card in README.md covers this instead.
           # plugin_achievements: yes
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "Mrvishal2k2"
+          git config user.email "mrvishal2k2@users.noreply.github.com"
+          git add assets/github-metrics.svg assets/streak-stats.svg
+          git diff --staged --quiet || (git commit -m "Update profile metrics & streak stats [skip ci]" && git push)
