@@ -86,6 +86,10 @@ jobs:
 
       - name: Commit and push changes
         run: |
+          if [ -d /metrics_renders ]; then
+            sudo cp -rf /metrics_renders/* ./
+            sudo chown -R $(id -u):$(id -g) assets/
+          fi
           git config user.name "Mrvishal2k2"
           git config user.email "mrvishal2k2@users.noreply.github.com"
           git add assets/github-metrics.svg assets/streak-stats.svg
