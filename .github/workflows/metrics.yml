@@ -59,6 +59,11 @@ jobs:
           base: header, activity, repositories
           config_timezone: Asia/Kolkata   # adjust if wrong
 
+          # Lower batch size from default 100 to 15 to prevent GraphQL API timeouts
+          # and ensure private repositories are included in language stats.
+          repositories_batch: 15
+          repositories_affiliations: owner, collaborator
+
           # Some runs came back with partial GraphQL data — stargazers, forkers,
           # watchers, releases and the language breakdown all zeroed while the repo
           # count stayed correct — and metrics rendered that degraded result and
